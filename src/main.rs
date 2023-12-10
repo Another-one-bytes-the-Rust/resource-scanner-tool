@@ -1,9 +1,11 @@
 
 pub mod resource_scanner {
-    use robotics_lib::interface::Tools;
+    use robotics_lib::interface::{Tools, robot_map, robot_view, discover_tiles, one_direction_view};
     use robotics_lib::runner::Runnable;
     use robotics_lib::world::coordinates::Coordinate;
+    use robotics_lib::world::tile::{Content, Tile};
     use robotics_lib::world::World;
+    use robotics_lib::utils::LibError;
 
     pub struct ResourceScanner {}
 
@@ -71,12 +73,40 @@ pub mod resource_scanner {
         DiagonalStar(usize)
     }
 
+
+
     impl Tools for ResourceScanner {}
 
     impl ResourceScanner {
-        pub fn test(&mut self, world: &World, robot: &mut impl Runnable, pattern: Pattern) -> Option<(Coordinate, usize)> {
+        /// The scan function scans an area around the robot for the required content according to the pattern.
+        /// it returns an option containing tile coordinates and number of contents if some content is found.
+        /// if no content is found in the given area it returns the origin as coordinate and 0 as quantity.
+        /// if the robot didn't have enough energy it returns None
+        pub fn scan(&mut self,
+                    world: &World,
+                    robot: &mut impl Runnable,
+                    pattern: Pattern,
+                    content: Content
+        ) -> Option<(Coordinate, usize)> {
+            // first check if any of the tiles in the scan pattern are already present in the robot map
+            let coordinates_to_check: Vec<Coordinate> = match pattern {
+                Pattern::Area(size) => {
+                    //todo check if size is odd, if not return an error
+                    let tile_map = robot_view(robot,world);
+                    let out = Vec::new();
 
+                    for (height_idx,row_vec) in tile_map.iter().enumerate() {
+                        for (width_idx, tile) in row_vec.iter().enumerate() {
+                            out.push(Coordinate::new())
+                        }
+                    }
+
+                }
+                _ => Vec::new()
+            }
         }
+
+
     }
 }
 
