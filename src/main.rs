@@ -5,7 +5,7 @@ pub mod resource_scanner {
     use robotics_lib::world::coordinates::Coordinate;
     use robotics_lib::world::World;
 
-    struct ResourceScanner {}
+    pub struct ResourceScanner {}
 
     /// Represents different scanning patterns used in the resource scanner tool.
     ///
@@ -57,7 +57,7 @@ pub mod resource_scanner {
     /// // Scan upward with a distance of 3.
     /// let up_scan = Pattern::DirectionUp(3);
     /// ```
-    enum Pattern {
+    pub enum Pattern {
         Area(usize),
         DirectionUp(usize),
         DirectionRight(usize),
@@ -74,7 +74,7 @@ pub mod resource_scanner {
     impl Tools for ResourceScanner {}
 
     impl ResourceScanner {
-        fn test(&mut self, world: &World, robot: &mut impl Runnable, pattern: Pattern) -> Option<(Coordinate, usize)> {
+        pub fn test(&mut self, world: &World, robot: &mut impl Runnable, pattern: Pattern) -> Option<(Coordinate, usize)> {
 
         }
     }
