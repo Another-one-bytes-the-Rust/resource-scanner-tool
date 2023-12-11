@@ -110,6 +110,4 @@ pub mod resource_scanner {
     }
 }
 
-fn main() {
-    println!("hello")
-}
+fn main() {}
