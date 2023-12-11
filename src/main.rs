@@ -232,20 +232,47 @@ pub mod resource_scanner {
                         return Err(Box::new(InvalidSizeError));
                     }
 
-                    //let mut out = Vec::new();
+                    if let Some(target_coordinates) = ResourceScanner::get_coordinates(robot,world,&Pattern::Area(size)) {
 
-                    for (height_idx,row_vec) in robot_map.iter().enumerate() {
-                        for (width_idx, tile) in row_vec.iter().enumerate() {
-                            out.push(MapCoordinate::new(width_idx,height_idx))
-                        }
                     }
-                    out
+                    else {
+                        return Err(Box::new())
+                    }
+
                 }
                 _ => Vec::new()
             };
         }
 
-        fn get_coordinates(robot: &mut impl Runnable, world: &World, pattern: &Pattern) -> Option<Vec<MapCoordinate>> {
+
+        /// Computes and returns a vector of target coordinates based on the given pattern.
+        ///
+        /// # Arguments
+        ///
+        /// * `robot` - A mutable reference to an object implementing the `Runnable` trait.
+        /// * `world` - A reference to the `World` in which the coordinates are computed.
+        /// * `pattern` - A reference to the `Pattern` that defines the coordinate computation.
+        ///
+        /// # Returns
+        ///
+        /// Returns an `Option<Vec<MapCoordinate>>` representing the vector of target coordinates.
+        /// Returns `None` if no valid coordinates are found.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use your_crate::{Runnable, World, Pattern, MapCoordinate, get_coordinates};
+        ///
+        /// // Create objects and define pattern
+        /// let mut robot = create_robot();
+        /// let world = create_world();
+        /// let pattern = Pattern::Area(3);
+        ///
+        /// // Get target coordinates
+        /// let coordinates = get_coordinates(&mut robot, &world, &pattern);
+        /// println!("{:?}", coordinates);
+        /// ```
+        fn get_target_coordinates(robot: &mut impl Runnable, world: &World, pattern: &Pattern) -> Option<Vec<MapCoordinate>> {
             let mut out = Vec::new();
             let world_size = robot_map(world).unwrap().len();
             let (x_robot, y_robot) = (robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
