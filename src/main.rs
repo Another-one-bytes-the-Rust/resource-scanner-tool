@@ -456,6 +456,22 @@ pub mod resource_scanner {
                 Some(out)
             }
         }
+
+        fn discover_tiles(robot: &mut impl Runnable, world: &mut World, pattern: &Pattern) -> Result<HashMap<(usize, usize), Option<Tile>>, dyn Error> {
+            let coordinate_vector = ResourceScanner::get_coordinates(robot, world, pattern);
+            let (robot_row, robot_col) = (robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
+            let mut out = Vec::new();
+            let mut search_vector = Vec::new();
+
+            for( index, coordinate) in coordinate_vector.unwrap().iter().enumerate() {
+                if robot_map(world).unwrap().get(coordinate.height).unwrap().get(coordinate.width).unwrap().is_some() {
+                    search_vector.push((coordinate.height, coordinate.width));
+                    robot_map(world).unwrap().get(coordinate.height).unwrap().get(coordinate.width).unwrap().unwrap().content.
+                }
+            }
+
+            discover_tiles(robot, world, &search_vector)
+        }
     }
 }
 
