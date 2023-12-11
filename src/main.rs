@@ -1,6 +1,8 @@
 pub mod resource_scanner {
+    use std::collections::HashMap;
     use std::error::Error;
     use std::fmt::{Debug, Display, Formatter};
+    use std::iter::Map;
     use std::num::Wrapping;
     use std::ops::{Add, Sub};
     use robotics_lib::interface::{Tools, robot_map, robot_view, discover_tiles, one_direction_view};
@@ -9,7 +11,8 @@ pub mod resource_scanner {
     use robotics_lib::world::tile::{Content, Tile};
     use robotics_lib::world::World;
     use robotics_lib::utils::LibError;
-    use crate::resource_scanner::ToolError::InvalidSizeError;
+    use robotics_lib::utils::LibError::NoMoreDiscovery;
+    use crate::resource_scanner::ToolError::{EmptyCoordinates, InvalidSizeError, NotEnoughEnergy};
 
     pub struct ResourceScanner {}
     impl Tools for ResourceScanner {}
@@ -186,8 +189,27 @@ pub mod resource_scanner {
         }
     }
 
+    impl From<(usize,usize)> for MapCoordinate {
+        fn from(value: (usize, usize)) -> Self {
+            Self {
+                width: value.0,
+                height: value.1
+            }
+        }
+    }
+
+    impl Into<(usize,usize)> for MapCoordinate {
+        fn into(self) -> (usize, usize) {
+            (self.width, self.height)
+        }
+    }
+
     pub enum ToolError{
         InvalidSizeError,
+        EmptyCoordinates,
+        NotEnoughEnergy,
+        NoMoreDiscovery,
+        UnknownError,
 
     }
 
@@ -204,7 +226,6 @@ pub mod resource_scanner {
     }
 
     impl Error for ToolError {
-
     }
 
 
@@ -217,26 +238,55 @@ pub mod resource_scanner {
         /// # Energy Cost
         ///
         pub fn scan(&mut self,
-                    world: &World,
+                    world: &mut World,
                     robot: &mut impl Runnable,
                     pattern: Pattern,
                     content: Content
         ) -> Result<Option<(MapCoordinate, usize)>,Box<dyn Error>> {
 
             // first check if any of the tiles in the scan pattern are already present in the robot map
-            let coordinates_to_check: Vec<MapCoordinate> = match pattern {
+            let coordinates_to_check: () = match pattern {
                 //todo IMPORTANT, CHECK IN EACH CASE 'size' FOR INVALID VALUES
                 Pattern::Area(size) => {
                     // return an error if the given size doesn't allow for a square area
                     if size % 2 == 0 || size < 3{
                         return Err(Box::new(InvalidSizeError));
                     }
+                    let target_coordinates = ResourceScanner::get_target_coordinates(robot,world,&Pattern::Area(size))
+                        .ok_or(Box::new(EmptyCoordinates))?;
 
-                    if let Some(target_coordinates) = ResourceScanner::get_coordinates(robot,world,&Pattern::Area(size)) {
+                    let known_coordinates = robot_map(world).unwrap();
 
-                    }
-                    else {
-                        return Err(Box::new())
+                    let sanitized_coordinates = ResourceScanner::get_sanitized_tiles(robot,world,&pattern);
+
+                    // todo() this does not have a size known at compile time, thus it cannot be used in discover_tiles, a possible solution is
+                    // todo() limiting the max size of the coordinate vector
+                    let sanitized_coordinates_as_slice = sanitized_coordinates.iter().map(|x|x as (usize,usize)).collect();
+
+
+                    let tiles = discover_tiles(robot, world, &sanitized_coordinates_as_slice);
+
+                    return match tiles {
+                        Ok(mut hashmap) => {
+                            // retain only the tiles containing the requested content
+                            hashmap.retain(|key,val| val.unwrap().content == content);
+
+                            // create a vector containing tile coordinates and corresponding content quantity
+                            let mut tile_vec: Vec<(MapCoordinate,usize)> = Vec::new();
+                            for (key,val) in hashmap.iter() {
+                                tile_vec.push((key as MapCoordinate, val.unwrap().content.get_value().0.unwrap()));
+                            }
+                            // find the tile coordinate corresponding to the max value
+                            let result = tile_vec.iter().max_by_key(|x|x.1);
+                            Ok(*result)
+                        },
+                        Err(error) => {
+                            return match error {
+                                LibError::NotEnoughEnergy => Err(Box::new(ToolError::NotEnoughEnergy)),
+                                LibError::NoMoreDiscovery => Err(Box::new(ToolError::NotEnoughEnergy)),
+                                _ =>  Err(Box::new(ToolError::UnknownError)),
+                            }
+                        }
                     }
 
                 }
@@ -261,7 +311,7 @@ pub mod resource_scanner {
         /// # Examples
         ///
         /// ```
-        /// use your_crate::{Runnable, World, Pattern, MapCoordinate, get_coordinates};
+        /// use resource-scanner-tool::{Runnable, World, Pattern, MapCoordinate, get_coordinates};
         ///
         /// // Create objects and define pattern
         /// let mut robot = create_robot();
@@ -276,6 +326,8 @@ pub mod resource_scanner {
             let mut out = Vec::new();
             let world_size = robot_map(world).unwrap().len();
             let (x_robot, y_robot) = (robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
+
+            // according to the pattern, compute the corresponding tile coordinates
             match pattern {
                 Pattern::Area(size) => {
                     let length = *size as i32;
@@ -283,7 +335,7 @@ pub mod resource_scanner {
                     let y_area_robot = length/2;
                     for x in 0..length {
                         for y in 0..length {
-                            // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
+                            // compute the tile coordinates in the world FoR (Frame of Reference) from the tile coordinates in the area FoR
                             let x_world = (x_robot as i32) + x - x_area_robot;
                             let y_world = (y_robot as i32) + y - y_area_robot;
                             // check if the coordinates are out of bound, if so omit them
@@ -439,7 +491,7 @@ pub mod resource_scanner {
 
                     // vertical arms
                     let x_world = x_robot as i32;
-                    for y in 0..length {
+                    for y in -length..length {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
@@ -457,20 +509,44 @@ pub mod resource_scanner {
             }
         }
 
-        fn discover_tiles(robot: &mut impl Runnable, world: &mut World, pattern: &Pattern) -> Result<HashMap<(usize, usize), Option<Tile>>, dyn Error> {
-            let coordinate_vector = ResourceScanner::get_coordinates(robot, world, pattern);
-            let (robot_row, robot_col) = (robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
-            let mut out = Vec::new();
-            let mut search_vector = Vec::new();
 
-            for( index, coordinate) in coordinate_vector.unwrap().iter().enumerate() {
-                if robot_map(world).unwrap().get(coordinate.height).unwrap().get(coordinate.width).unwrap().is_some() {
-                    search_vector.push((coordinate.height, coordinate.width));
-                    robot_map(world).unwrap().get(coordinate.height).unwrap().get(coordinate.width).unwrap().unwrap().content.
+        /// Returns a vector of sanitized coordinates to be scanned based on the provided pattern,
+        /// excluding coordinates already known by the robot.
+        ///
+        /// # Arguments
+        ///
+        /// * `robot` - A mutable reference to an object implementing the `Runnable` trait.
+        /// * `world` - A reference to the `World` in which the coordinates are scanned.
+        /// * `pattern` - A reference to the `Pattern` that defines the scanning coordinates.
+        ///
+        /// # Returns
+        ///
+        /// Returns a vector of `MapCoordinate` representing the sanitized coordinates.
+        ///
+        /// # Errors
+        ///
+        /// Returns an empty vector if no target coordinates are found.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use resource-scanner-tool::{Runnable, World, Pattern, MapCoordinate, get_sanitized_tiles};
+        ///
+        ///
+        /// // Get sanitized coordinates
+        /// let sanitized_coordinates = get_sanitized_tiles(&mut robot, &world, &pattern);
+        /// println!("{:?}", sanitized_coordinates);
+        /// ```
+        fn get_sanitized_tiles(robot: &mut impl Runnable, world: &World, pattern: &Pattern) -> Vec<MapCoordinate> {
+            let mut target_vector = ResourceScanner::get_target_coordinates(robot, world, pattern)?;
+
+            for (index, coordinate) in target_vector.iter().enumerate() {
+                let known_coordinates = robot_map(world).unwrap();
+                if known_coordinates[coordinate.height][coordinate.width].is_none() {
+                    target_vector.remove(index);
                 }
             }
-
-            discover_tiles(robot, world, &search_vector)
+            target_vector
         }
     }
 }
