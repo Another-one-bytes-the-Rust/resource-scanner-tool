@@ -2,6 +2,7 @@ pub mod resource_scanner {
     use std::error::Error;
     use std::fmt::{Debug, Display, Formatter};
     use std::num::Wrapping;
+    use std::ops::{Add, Sub};
     use robotics_lib::interface::{Tools, robot_map, robot_view, discover_tiles, one_direction_view};
     use robotics_lib::runner::Runnable;
     use robotics_lib::world::coordinates::Coordinate;
@@ -165,6 +166,26 @@ pub mod resource_scanner {
         }
     }
 
+    impl Add for MapCoordinate {
+        type Output = Self;
+        fn add(self, rhs: Self) -> Self::Output {
+            Self {
+                width: self.width + rhs.width,
+                height: self.height + rhs.height
+            }
+        }
+    }
+
+    impl Sub for MapCoordinate {
+        type Output = Self;
+        fn sub(self, rhs: Self) -> Self::Output {
+            Self {
+                width: self.width - rhs.width,
+                height: self.height - rhs.height
+            }
+        }
+    }
+
     pub enum ToolError{
         InvalidSizeError,
 
@@ -201,17 +222,17 @@ pub mod resource_scanner {
                     pattern: Pattern,
                     content: Content
         ) -> Result<Option<(MapCoordinate, usize)>,Box<dyn Error>> {
+
             // first check if any of the tiles in the scan pattern are already present in the robot map
             let coordinates_to_check: Vec<MapCoordinate> = match pattern {
+                //todo IMPORTANT, CHECK IN EACH CASE 'size' FOR INVALID VALUES
                 Pattern::Area(size) => {
                     // return an error if the given size doesn't allow for a square area
                     if size % 2 == 0 || size < 3{
                         return Err(Box::new(InvalidSizeError));
                     }
 
-                    let
-
-                    let mut out = Vec::new();
+                    //let mut out = Vec::new();
 
                     for (height_idx,row_vec) in robot_map.iter().enumerate() {
                         for (width_idx, tile) in row_vec.iter().enumerate() {
@@ -230,20 +251,182 @@ pub mod resource_scanner {
             let (x_robot, y_robot) = (robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
             match pattern {
                 Pattern::Area(size) => {
-                    let lower_bound = size/2;
-                    let upper_bound = size/2 + 1;
-                    for x in lower_bound..upper_bound {
-                        for y in lower_bound..upper_bound {
+                    let length = *size as i32;
+                    let x_area_robot = length/2;
+                    let y_area_robot = length/2;
+                    for x in 0..length {
+                        for y in 0..length {
+                            // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
+                            let x_world = (x_robot as i32) + x - x_area_robot;
+                            let y_world = (y_robot as i32) + y - y_area_robot;
                             // check if the coordinates are out of bound, if so omit them
-                            if !(x < 0 || x > world_size-1 || y < 0 || y > world_size-1) {
-                                // compute the tile world coordinates given the robot coordinates
-                                let x_world = x_robot - x;
-                                let y_world = y_robot - y;
+                            if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                                out.push(MapCoordinate::new(x_world as usize,y_world as usize));
                             }
                         }
                     }
-
                 }
+
+                Pattern::DirectionLeft(size) => {
+                    let length = *size as i32;
+                    let y_world = y_robot as i32;
+                    for x in 0..-length {
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
+                        let x_world = (x_robot as i32) + x;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+                }
+
+                Pattern::DirectionRight(size) => {
+                    let length = *size as i32;
+                    let y_world = y_robot as i32;
+                    for x in 0..length {
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
+                        let x_world = (x_robot as i32) + x;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+                }
+
+                Pattern::DirectionUp(size) => {
+                    let length = *size as i32;
+                    let x_world = x_robot as i32;
+                    for y in 0..length {
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
+                        let y_world = (y_robot as i32) + y;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+                }
+
+                Pattern::DirectionDown(size) => {
+                    let length = *size as i32;
+                    let x_world = x_robot as i32;
+                    for y in 0..-length {
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
+                        let y_world = (y_robot as i32) + y;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+                }
+
+                Pattern::DiagonalUpperLeft(size) => {
+                    let length = *size as i32;
+                    for i in 0..length {
+                        let x = -i;
+                        let y= -i;
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
+                        let x_world = (x_robot as i32) + x;
+                        let y_world = (y_robot as i32) + y;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+                }
+
+                Pattern::DiagonalUpperRight(size) => {
+                    let length = *size as i32;
+                    for i in 0..length {
+                        let x = i;
+                        let y= -i;
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
+                        let x_world = (x_robot as i32) + x;
+                        let y_world = (y_robot as i32) + y;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+                }
+
+                Pattern::DiagonalLowerLeft(size) => {
+                    let length = *size as i32;
+                    for i in 0..length {
+                        let x = -i;
+                        let y= i;
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
+                        let x_world = (x_robot as i32) + x;
+                        let y_world = (y_robot as i32) + y;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+                }
+
+                Pattern::DiagonalLowerRight(size) => {
+                    let length = *size as i32;
+                    for i in 0..length {
+                        let x = i;
+                        let y= i;
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
+                        let x_world = (x_robot as i32) + x;
+                        let y_world = (y_robot as i32) + y;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+                }
+
+                Pattern::DiagonalStar(size) => {
+                    let length = *size as i32;
+                    for i in 0..length {
+                        for multiplier in [(1,1),(1,-1),(-1,1),(1,1)] {
+                            let x = multiplier.0 * i;
+                            let y = multiplier.1 * i;
+                            // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
+                            let x_world = (x_robot as i32) + x;
+                            let y_world = (y_robot as i32) + y;
+                            // check if the coordinates are out of bound, if so omit them
+                            if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                                out.push(MapCoordinate::new(x_world as usize, y_world as usize));
+                            }
+                        }
+                    }
+                }
+
+                Pattern::StraightStar(size) => {
+                    let length = *size as i32;
+
+                    // horizontal arms
+                    let y_world = y_robot as i32;
+                    for x in -length..length {
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
+                        let x_world = (x_robot as i32) + x;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+
+                    // vertical arms
+                    let x_world = x_robot as i32;
+                    for y in 0..length {
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
+                        let y_world = (y_robot as i32) + y;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0 || x_world > (world_size as i32)-1 || y_world < 0 || y_world > (world_size as i32)-1) {
+                            out.push(MapCoordinate::new(x_world as usize,y_world as usize));
+                        }
+                    }
+                }
+            }
+
+            return if out.len() == 0 {
+                None
+            } else {
+                Some(out)
             }
         }
     }
