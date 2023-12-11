@@ -1,12 +1,14 @@
-
 pub mod resource_scanner {
     use std::error::Error;
+    use std::fmt::{Debug, Display, Formatter};
+    use std::num::Wrapping;
     use robotics_lib::interface::{Tools, robot_map, robot_view, discover_tiles, one_direction_view};
     use robotics_lib::runner::Runnable;
     use robotics_lib::world::coordinates::Coordinate;
     use robotics_lib::world::tile::{Content, Tile};
     use robotics_lib::world::World;
     use robotics_lib::utils::LibError;
+    use crate::resource_scanner::ToolError::InvalidSizeError;
 
     pub struct ResourceScanner {}
     impl Tools for ResourceScanner {}
@@ -156,6 +158,33 @@ pub mod resource_scanner {
             self.height = height;
         }
     }
+    
+    impl PartialEq for MapCoordinate {
+        fn eq(&self, other: &Self) -> bool {
+            self.height == other.height && self.width == other.width
+        }
+    }
+
+    pub enum ToolError{
+        InvalidSizeError,
+
+    }
+
+    impl Debug for ToolError {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            todo!()
+        }
+    }
+
+    impl Display for ToolError {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            todo!()
+        }
+    }
+
+    impl Error for ToolError {
+
+    }
 
 
     impl ResourceScanner {
@@ -175,16 +204,16 @@ pub mod resource_scanner {
             // first check if any of the tiles in the scan pattern are already present in the robot map
             let coordinates_to_check: Vec<MapCoordinate> = match pattern {
                 Pattern::Area(size) => {
-                    //todo check if size is odd, if not return an error
-                    if size % 2 == 0 || size < 3 {
-                        return Err(Box::new())
+                    // return an error if the given size doesn't allow for a square area
+                    if size % 2 == 0 || size < 3{
+                        return Err(Box::new(InvalidSizeError));
                     }
 
-                    let tile_map = robot_view(robot,world);
-                    let (robot_row, robot_col) = (robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
+                    let
+
                     let mut out = Vec::new();
 
-                    for (height_idx,row_vec) in tile_map.iter().enumerate() {
+                    for (height_idx,row_vec) in robot_map.iter().enumerate() {
                         for (width_idx, tile) in row_vec.iter().enumerate() {
                             out.push(MapCoordinate::new(width_idx,height_idx))
                         }
@@ -193,6 +222,29 @@ pub mod resource_scanner {
                 }
                 _ => Vec::new()
             };
+        }
+
+        fn get_coordinates(robot: &mut impl Runnable, world: &World, pattern: &Pattern) -> Option<Vec<MapCoordinate>> {
+            let mut out = Vec::new();
+            let world_size = robot_map(world).unwrap().len();
+            let (x_robot, y_robot) = (robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
+            match pattern {
+                Pattern::Area(size) => {
+                    let lower_bound = size/2;
+                    let upper_bound = size/2 + 1;
+                    for x in lower_bound..upper_bound {
+                        for y in lower_bound..upper_bound {
+                            // check if the coordinates are out of bound, if so omit them
+                            if !(x < 0 || x > world_size-1 || y < 0 || y > world_size-1) {
+                                // compute the tile world coordinates given the robot coordinates
+                                let x_world = x_robot - x;
+                                let y_world = y_robot - y;
+                            }
+                        }
+                    }
+
+                }
+            }
         }
     }
 }
