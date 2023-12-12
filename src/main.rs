@@ -81,6 +81,24 @@ pub mod resource_scanner {
         DiagonalStar(usize)
     }
 
+    /// The `MapCoordinate` struct represents coordinates within a two-dimensional map or grid.
+    ///
+    /// ## Fields
+    ///
+    /// - `width`: An unsigned integer representing the number of columns in the coordinate system.
+    /// - `height`: An unsigned integer representing the number of rows in the coordinate system.
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// // Creating a new MapCoordinate instance
+    /// let coordinate = MapCoordinate::new(8,3);
+    ///
+    /// // Accessing width and height
+    /// println!("Width: {}", coordinate.get_width());
+    /// println!("Height: {}", coordinate.get_height());
+    /// ```
+    ///
     pub struct MapCoordinate {
         width: usize,
         height: usize
@@ -271,7 +289,7 @@ pub mod resource_scanner {
                             // retain only the tiles containing the requested content
                             hashmap.retain(|key,val| val.unwrap().content == content);
 
-                            // create a vector containing tile coordinates and corresponding content quantity
+                            // create a v/home/kirk/Courses/Advanced-Programming/Project/tile-resource-mapper-toolector containing tile coordinates and corresponding content quantity
                             let mut tile_vec: Vec<(MapCoordinate,usize)> = Vec::new();
                             for (key,val) in hashmap.iter() {
                                 tile_vec.push((key as MapCoordinate, val.unwrap().content.get_value().0.unwrap()));
