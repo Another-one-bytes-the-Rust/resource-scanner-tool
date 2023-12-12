@@ -1,250 +1,19 @@
 pub mod resource_scanner {
-    use std::collections::HashMap;
     use std::error::Error;
     use std::fmt::{Debug, Display, Formatter};
-    use std::iter::Map;
-    use std::num::Wrapping;
-    use std::ops::{Add, Sub};
     use robotics_lib::interface::{Tools, robot_map, robot_view, discover_tiles, one_direction_view};
     use robotics_lib::runner::Runnable;
-    use robotics_lib::world::coordinates::Coordinate;
     use robotics_lib::world::tile::{Content, Tile};
     use robotics_lib::world::World;
     use robotics_lib::utils::LibError;
-    use robotics_lib::utils::LibError::NoMoreDiscovery;
-    use crate::resource_scanner::ToolError::{EmptyCoordinates, InvalidSizeError, NotEnoughEnergy};
+    use resource_scanner_tool::map_coordinate::{MapCoordinate, Pattern};
+    use resource_scanner_tool::tool_errors::ToolError;
+    use resource_scanner_tool::tool_errors::ToolError::*;
 
     pub struct ResourceScanner {}
     impl Tools for ResourceScanner {}
 
-    /// Represents different scanning patterns used in the resource scanner tool.
-    ///
-    /// The `Pattern` enum is used to specify the scanning behavior, and each variant
-    /// includes a `usize` field indicating the range or size of the scan.
-    ///
-    /// # Variants
-    ///
-    /// - `Area(usize)`: Scans in a square area with a side length specified by the `usize` parameter.
-    /// - `DirectionUp(usize)`: Scans in an upward direction with the specified distance.
-    /// - `DirectionRight(usize)`: Scans in a rightward direction with the specified distance.
-    /// - `DirectionLeft(usize)`: Scans in a leftward direction with the specified distance.
-    /// - `DirectionDown(usize)`: Scans in a downward direction with the specified distance.
-    /// - `DiagonalUpperLeft(usize)`: Scans diagonally in the upper-left direction with the specified distance.
-    /// - `DiagonalUpperRight(usize)`: Scans diagonally in the upper-right direction with the specified distance.
-    /// - `DiagonalLowerLeft(usize)`: Scans diagonally in the lower-left direction with the specified distance.
-    /// - `DiagonalLowerRight(usize)`: Scans diagonally in the lower-right direction with the specified distance.
-    /// - `StraightStar(usize)`: Scans in a star pattern in all directions with the specified distance.
-    /// - `DiagonalStar(usize)`: Scans in a star pattern diagonally in all directions with the specified distance.
-    ///
-    /// ASCII drawing for `StraightStar(2)`:
-    ///
-    /// ```plaintext
-    ///      *
-    ///      *
-    ///    **r**
-    ///      *
-    ///      *
-    /// ```
-    ///
-    /// ASCII drawing for `DiagonalStar(3)`:
-    ///
-    /// ```plaintext
-    ///  *     *
-    ///   *   *
-    ///    * *
-    ///     r
-    ///    * *
-    ///   *   *
-    ///  *     *
-    /// ```
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// // Scan in a square area with a side length of 5.
-    /// let area_scan = Pattern::Area(5);
-    ///
-    /// // Scan upward with a distance of 3.
-    /// let up_scan = Pattern::DirectionUp(3);
-    /// ```
-    pub enum Pattern {
-        Area(usize),
-        DirectionUp(usize),
-        DirectionRight(usize),
-        DirectionLeft(usize),
-        DirectionDown(usize),
-        DiagonalUpperLeft(usize),
-        DiagonalUpperRight(usize),
-        DiagonalLowerLeft(usize),
-        DiagonalLowerRight(usize),
-        StraightStar(usize),
-        DiagonalStar(usize)
-    }
 
-    /// The `MapCoordinate` struct represents coordinates within a two-dimensional map or grid.
-    ///
-    /// ## Fields
-    ///
-    /// - `width`: An unsigned integer representing the number of columns in the coordinate system.
-    /// - `height`: An unsigned integer representing the number of rows in the coordinate system.
-    ///
-    /// ## Example
-    ///
-    /// ```
-    /// // Creating a new MapCoordinate instance
-    /// let coordinate = MapCoordinate::new(8,3);
-    ///
-    /// // Accessing width and height
-    /// println!("Width: {}", coordinate.get_width());
-    /// println!("Height: {}", coordinate.get_height());
-    /// ```
-    ///
-    pub struct MapCoordinate {
-        width: usize,
-        height: usize
-    }
-    impl MapCoordinate {
-        /// Creates a new `MapCoordinate` instance with the given width and height.
-        ///
-        /// # Arguments
-        ///
-        /// * `width` - The width of the map.
-        /// * `height` - The height of the map.
-        ///
-        /// # Example
-        ///
-        /// ```
-        /// let coordinates = MapCoordinate::new(10, 20);
-        /// ```
-        pub fn new(width: usize, height: usize) -> Self {
-            MapCoordinate { width, height }
-        }
-
-        /// Gets the width of the map coordinate.
-        ///
-        /// # Example
-        ///
-        /// ```
-        /// let coordinates = MapCoordinate::new(10, 20);
-        /// let width = coordinates.get_width();
-        /// assert_eq!(width, 10);
-        /// ```
-        pub fn get_width(&self) -> usize {
-            self.width
-        }
-
-        /// Sets the width of the map coordinate.
-        ///
-        /// # Arguments
-        ///
-        /// * `width` - The new width value.
-        ///
-        /// # Example
-        ///
-        /// ```
-        /// let mut coordinates = MapCoordinate::new(10, 20);
-        /// coordinates.set_width(15);
-        /// assert_eq!(coordinates.get_width(), 15);
-        /// ```
-        pub fn set_width(&mut self, width: usize) {
-            self.width = width;
-        }
-
-        /// Gets the height of the map coordinate.
-        ///
-        /// # Example
-        ///
-        /// ```
-        /// let coordinates = MapCoordinate::new(10, 20);
-        /// let height = coordinates.get_height();
-        /// assert_eq!(height, 20);
-        /// ```
-        pub fn get_height(&self) -> usize {
-            self.height
-        }
-
-        /// Sets the height of the map coordinate.
-        ///
-        /// # Arguments
-        ///
-        /// * `height` - The new height value.
-        ///
-        /// # Example
-        ///
-        /// ```
-        /// let mut coordinates = MapCoordinate::new(10, 20);
-        /// coordinates.set_height(25);
-        /// assert_eq!(coordinates.get_height(), 25);
-        /// ```
-        pub fn set_height(&mut self, height: usize) {
-            self.height = height;
-        }
-    }
-    
-    impl PartialEq for MapCoordinate {
-        fn eq(&self, other: &Self) -> bool {
-            self.height == other.height && self.width == other.width
-        }
-    }
-
-    impl Add for MapCoordinate {
-        type Output = Self;
-        fn add(self, rhs: Self) -> Self::Output {
-            Self {
-                width: self.width + rhs.width,
-                height: self.height + rhs.height
-            }
-        }
-    }
-
-    impl Sub for MapCoordinate {
-        type Output = Self;
-        fn sub(self, rhs: Self) -> Self::Output {
-            Self {
-                width: self.width - rhs.width,
-                height: self.height - rhs.height
-            }
-        }
-    }
-
-    impl From<(usize,usize)> for MapCoordinate {
-        fn from(value: (usize, usize)) -> Self {
-            Self {
-                width: value.0,
-                height: value.1
-            }
-        }
-    }
-
-    impl Into<(usize,usize)> for MapCoordinate {
-        fn into(self) -> (usize, usize) {
-            (self.width, self.height)
-        }
-    }
-
-    pub enum ToolError{
-        InvalidSizeError,
-        EmptyCoordinates,
-        NotEnoughEnergy,
-        NoMoreDiscovery,
-        UnknownError,
-
-    }
-
-    impl Debug for ToolError {
-        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-            todo!()
-        }
-    }
-
-    impl Display for ToolError {
-        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-            todo!()
-        }
-    }
-
-    impl Error for ToolError {
-    }
 
 
     impl ResourceScanner {
@@ -323,13 +92,13 @@ pub mod resource_scanner {
         ///
         /// # Returns
         ///
-        /// Returns an `Option<Vec<MapCoordinate>>` representing the vector of target coordinates.
+        /// Returns an `Option<Vec<map_coordinate>>` representing the vector of target coordinates.
         /// Returns `None` if no valid coordinates are found.
         ///
         /// # Examples
         ///
         /// ```
-        /// use resource-scanner-tool::{Runnable, World, Pattern, MapCoordinate, get_coordinates};
+        /// use resource-scanner-tool::{Runnable, World, Pattern, map_coordinate, get_coordinates};
         ///
         /// // Create objects and define pattern
         /// let mut robot = create_robot();
@@ -539,7 +308,7 @@ pub mod resource_scanner {
         ///
         /// # Returns
         ///
-        /// Returns a vector of `MapCoordinate` representing the sanitized coordinates.
+        /// Returns a vector of `map_coordinate` representing the sanitized coordinates.
         ///
         /// # Errors
         ///
@@ -548,7 +317,7 @@ pub mod resource_scanner {
         /// # Examples
         ///
         /// ```
-        /// use resource-scanner-tool::{Runnable, World, Pattern, MapCoordinate, get_sanitized_tiles};
+        /// use resource-scanner-tool::{Runnable, World, Pattern, map_coordinate, get_sanitized_tiles};
         ///
         ///
         /// // Get sanitized coordinates
@@ -560,7 +329,7 @@ pub mod resource_scanner {
 
             for (index, coordinate) in target_vector.iter().enumerate() {
                 let known_coordinates = robot_map(world).unwrap();
-                if known_coordinates[coordinate.height][coordinate.width].is_none() {
+                if known_coordinates[coordinate.get_height()][coordinate.get_width()].is_none() {
                     target_vector.remove(index);
                 }
             }
