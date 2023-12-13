@@ -7,7 +7,7 @@ pub mod tool_errors {
         EmptyCoordinates,
         NotEnoughEnergy,
         NoMoreDiscovery,
-        UnknownError,
+        Other(String),
 
     }
 
@@ -22,7 +22,7 @@ pub mod tool_errors {
             return match self {
                 ToolError::EmptyCoordinates => write!(f,""),
                 ToolError::NotEnoughEnergy => write!(f,""),
-                ToolError::UnknownError => write!(f,""),
+                ToolError::Other(message) => write!(f,"{}", message),
                 ToolError::InvalidSizeError => write!(f,""),
                 ToolError::NoMoreDiscovery => write!(f,""),
 
