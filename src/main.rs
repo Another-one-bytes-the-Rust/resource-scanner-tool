@@ -110,9 +110,12 @@ pub mod resource_scanner {
 
                     // todo() this does not have a size known at compile time, thus it cannot be used in discover_tiles, a possible solution is
                     // todo() limiting the max size of the coordinate vector
-                    let sanitized_coordinates_as_slice = sanitized_coordinates.iter().map(|x|x as (usize,usize)).collect();
+                    let sanitized_coordinates_as_slice = sanitized_coordinates.iter()
+                        .map(|x|x as (usize,usize))
+                        .collect::<Vec<_>>()
+                        .as_slice();
 
-
+                    // todo() match based on the pattern, we can use direction vision, robot_view, etc.
                     let tiles = discover_tiles(robot, world, &sanitized_coordinates_as_slice);
 
                     return match tiles {
@@ -120,14 +123,15 @@ pub mod resource_scanner {
                             // retain only the tiles containing the requested content
                             hashmap.retain(|key,val| val.unwrap().content == content);
 
-                            // create a v/home/kirk/Courses/Advanced-Programming/Project/tile-resource-mapper-toolector containing tile coordinates and corresponding content quantity
+                            // create a vector containing tile coordinates and corresponding content quantity
                             let mut tile_vec: Vec<(MapCoordinate,usize)> = Vec::new();
                             for (key,val) in hashmap.iter() {
                                 tile_vec.push((key as MapCoordinate, val.unwrap().content.get_value().0.unwrap()));
                             }
                             // find the tile coordinate corresponding to the max value
-                            let result = tile_vec.iter().max_by_key(|x|x.1);
-                            Ok(*result)
+                            let result = tile_vec.iter().max_by_key(|x|x.1).unwrap();
+                            // return the result
+                            Ok(Some(result))
                         },
                         Err(error) => {
                             return match error {
