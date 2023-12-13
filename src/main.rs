@@ -108,8 +108,6 @@ pub mod resource_scanner {
 
                     let sanitized_coordinates = ResourceScanner::get_sanitized_tiles(robot,world,&pattern);
 
-                    // todo() this does not have a size known at compile time, thus it cannot be used in discover_tiles, a possible solution is
-                    // todo() limiting the max size of the coordinate vector
                     let sanitized_coordinates_as_slice = sanitized_coordinates.iter()
                         .map(|x|x as (usize,usize))
                         .collect::<Vec<_>>()
