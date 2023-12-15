@@ -157,7 +157,10 @@ pub mod resource_scanner {
                 Ok(mut hashmap) => {
                     // retain only the tiles containing the requested content
                     hashmap.retain(|key, val| val.unwrap().content == content);
-
+                    // if the hashmap is empty, return None
+                    if hashmap.is_empty() {
+                        return Ok(None);
+                    }
                     // create a vector containing tile coordinates and corresponding content quantity
                     let mut tile_vec: Vec<(MapCoordinate, usize)> = Vec::new();
                     for (key, val) in hashmap.iter() {
@@ -171,8 +174,8 @@ pub mod resource_scanner {
                 Err(error) => {
                     return match error {
                         LibError::NotEnoughEnergy => Err(Box::new(ToolError::NotEnoughEnergy)),
-                        LibError::NoMoreDiscovery => Err(Box::new(ToolError::NotEnoughEnergy)),
-                        _ => Err(Box::new(ToolError::Other())),
+                        LibError::NoMoreDiscovery => Err(Box::new(ToolError::NoMoreDiscovery)),
+                        other => Err(Box::new(ToolError::Other(format!("{:?}", other)))),
                     }
                 }
             }
