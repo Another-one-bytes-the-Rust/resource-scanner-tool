@@ -145,18 +145,17 @@ pub mod resource_scanner {
             // get coordinates of tiles to scan
             let sanitized_coordinates = ResourceScanner::get_sanitized_tiles(robot, world, &pattern);
 
-            let sanitized_coordinates_as_slice = sanitized_coordinates.iter()
-                .map(|x| x as (usize, usize))
-                .collect::<Vec<_>>()
-                .as_slice();
+            let binding = sanitized_coordinates.iter()
+                .map(|x| (*x).into())
+                .collect::<Vec<_>>();
 
             // discover the tiles
-            let tiles = discover_tiles(robot, world, &sanitized_coordinates_as_slice);
+            let tiles = discover_tiles(robot, world, &binding);
 
             return match tiles {
                 Ok(mut hashmap) => {
                     // retain only the tiles containing the requested content
-                    hashmap.retain(|key, val| val.unwrap().content == content);
+                    hashmap.retain(|key, val| val.as_ref().unwrap().content == content);
                     // if the hashmap is empty, return None
                     if hashmap.is_empty() {
                         return Ok(None);
@@ -164,7 +163,7 @@ pub mod resource_scanner {
                     // create a vector containing tile coordinates and corresponding content quantity
                     let mut tile_vec: Vec<(MapCoordinate, usize)> = Vec::new();
                     for (key, val) in hashmap.iter() {
-                        tile_vec.push((key as MapCoordinate, val.unwrap().content.get_value().0.unwrap()));
+                        tile_vec.push((MapCoordinate::from(*key), val.as_ref().unwrap().content.get_value().0.unwrap()));
                     }
                     // find the tile coordinate corresponding to the max value
                     let result = tile_vec.iter().max_by_key(|x| x.1).cloned().unwrap();
@@ -425,15 +424,25 @@ pub mod resource_scanner {
         /// println!("{:?}", sanitized_coordinates);
         /// ```
         fn get_sanitized_tiles(robot: &mut impl Runnable, world: &World, pattern: &Pattern) -> Vec<MapCoordinate> {
-            let mut target_vector = ResourceScanner::get_target_coordinates(robot, world, pattern)?;
+            let target_vector = ResourceScanner::get_target_coordinates(robot, world, pattern);
 
-            for (index, coordinate) in target_vector.iter().enumerate() {
-                let known_coordinates = robot_map(world).unwrap();
-                if known_coordinates[coordinate.get_height()][coordinate.get_width()].is_none() {
-                    target_vector.remove(index);
+            return match target_vector {
+                Some(mut v) => {
+                    let mut tiles_to_remove = Vec::new();
+                    for (index, coordinate) in v.iter().enumerate() {
+                        let known_coordinates = robot_map(world).unwrap();
+                        if known_coordinates[coordinate.get_height()][coordinate.get_width()].is_none() {
+                            tiles_to_remove.push(index);
+                        }
+                    }
+                    for index in tiles_to_remove.iter() {
+                        v.remove(*index);
+                    }
+                    v
                 }
+                None => Vec::new()
             }
-            target_vector
+
         }
     }
 }
