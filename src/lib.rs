@@ -13,7 +13,7 @@ pub mod tool_errors {
 
     impl Debug for ToolError {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-            todo!()
+            write!(f,"{:?}",self)
         }
     }
 
