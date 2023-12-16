@@ -1,6 +1,5 @@
 pub mod resource_scanner {
     use std::error::Error;
-    
     use robotics_lib::interface::{Tools, robot_map, discover_tiles};
     use robotics_lib::runner::Runnable;
     use robotics_lib::world::tile::{Content};
@@ -132,6 +131,24 @@ pub mod resource_scanner {
         ///
         /// # Energy Cost
         ///
+        /// This tool uses the underlying interface `discover_tile` to discover tiles. Since it uses
+        /// 3 energy for each discovered tile, the scan function first checks if enough energy is present
+        /// to complete the task.
+        /// The following are the different energy costs based on pattern and size (assuming no tiles
+        /// have already been discovered):
+        ///
+        /// - `Area(size)`: free if size = 3, else 12 * (size - 1)
+        /// - `DirectionUp(size)`: 3 * size
+        /// - `DirectionRight(size)`: 3 * size
+        /// - `DirectionLeft(size)`: 3 * size
+        /// - `DirectionDown(size)`: 3 * size
+        /// - `DiagonalUpperLeft(size)`: 3 * size
+        /// - `DiagonalUpperRight(size)`: 3 * size
+        /// - `DiagonalLowerLeft(size)`: 3 * size
+        /// - `DiagonalLowerRight(size)`: 3 * size
+        /// - `StraightStar(size)`: 12 * size
+        /// - `DiagonalStar(size)`: 12 * size
+        ///
         pub fn scan(&mut self,
                     world: &mut World,
                     robot: &mut impl Runnable,
@@ -150,6 +167,7 @@ pub mod resource_scanner {
                 .collect::<Vec<_>>();
 
             // discover the tiles
+            // todo() use robot_view if the the scan pattern is `Area(3)`
             let tiles = discover_tiles(robot, world, &binding);
 
             return match tiles {
