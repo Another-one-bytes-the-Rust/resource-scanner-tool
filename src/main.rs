@@ -1,9 +1,9 @@
 pub mod resource_scanner {
     use std::error::Error;
-    use std::fmt::{Debug, Display, Formatter};
-    use robotics_lib::interface::{Tools, robot_map, robot_view, discover_tiles, one_direction_view};
+    
+    use robotics_lib::interface::{Tools, robot_map, discover_tiles};
     use robotics_lib::runner::Runnable;
-    use robotics_lib::world::tile::{Content, Tile};
+    use robotics_lib::world::tile::{Content};
     use robotics_lib::world::World;
     use robotics_lib::utils::LibError;
     use resource_scanner_tool::map_coordinate::MapCoordinate;
@@ -155,7 +155,7 @@ pub mod resource_scanner {
             return match tiles {
                 Ok(mut hashmap) => {
                     // retain only the tiles containing the requested content
-                    hashmap.retain(|key, val| val.as_ref().unwrap().content == content);
+                    hashmap.retain(|_key, val| val.as_ref().unwrap().content == content);
                     // if the hashmap is empty, return None
                     if hashmap.is_empty() {
                         return Ok(None);
