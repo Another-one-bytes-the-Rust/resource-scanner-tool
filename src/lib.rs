@@ -57,6 +57,7 @@ pub mod map_coordinate {
     /// println!("Height: {}", coordinate.get_height());
     /// ```
     ///
+    #[derive(Debug,Clone,Copy)]
     pub struct MapCoordinate {
         width: usize,
         height: usize
