@@ -19,11 +19,11 @@ pub mod tool_errors {
     impl Display for ToolError {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             return match self {
-                ToolError::EmptyCoordinates => write!(f, ""),
-                ToolError::NotEnoughEnergy => write!(f, ""),
+                ToolError::EmptyCoordinates => Ok(()),
+                ToolError::NotEnoughEnergy => Ok(()),
                 ToolError::Other(message) => write!(f, "{}", message),
-                ToolError::InvalidSizeError => write!(f, ""),
-                ToolError::NoMoreDiscovery => write!(f, ""),
+                ToolError::InvalidSizeError => Ok(()),
+                ToolError::NoMoreDiscovery => Ok(()),
             };
         }
     }
