@@ -1,13 +1,13 @@
 pub mod resource_scanner {
-    use std::error::Error;
-    use robotics_lib::interface::{Tools, robot_map, discover_tiles};
+    use crate::coordinates::map_coordinate::MapCoordinate;
+    use crate::errors::tool_errors::ToolError;
+    use crate::errors::tool_errors::ToolError::*;
+    use robotics_lib::interface::{discover_tiles, robot_map, Tools};
     use robotics_lib::runner::Runnable;
-    use robotics_lib::world::tile::{Content};
-    use robotics_lib::world::World;
     use robotics_lib::utils::LibError;
-    use resource_scanner_tool::map_coordinate::MapCoordinate;
-    use resource_scanner_tool::tool_errors::ToolError;
-    use resource_scanner_tool::tool_errors::ToolError::*;
+    use robotics_lib::world::tile::Content;
+    use robotics_lib::world::World;
+    use std::error::Error;
 
     /// Represents different scanning patterns used in the resource scanner tool.
     ///
@@ -54,7 +54,7 @@ pub mod resource_scanner {
     ///
     /// ```
     /// // Scan in a square area with a side length of 5.
-    /// use resource_scanner_tool::map_coordinate::Pattern;
+    /// use resource_scanner_tool::tool::resource_scanner::Pattern;
     /// let area_scan = Pattern::Area(5);
     ///
     /// // Scan upward with a distance of 3.
@@ -71,7 +71,7 @@ pub mod resource_scanner {
         DiagonalLowerLeft(usize),
         DiagonalLowerRight(usize),
         StraightStar(usize),
-        DiagonalStar(usize)
+        DiagonalStar(usize),
     }
 
     impl Pattern {
@@ -81,41 +81,19 @@ pub mod resource_scanner {
         /// Returns `true` if the size is valid, `false` otherwise
         fn check_size(&self) -> bool {
             return match self {
-                Pattern::Area(size) if size % 2 == 0 || (*size as i32) < 3 => {
-                    false
-                }
-                Pattern::DirectionUp(size) if (*size as i32) < 1 => {
-                    false
-                }
-                Pattern::DirectionRight(size) if (*size as i32) < 1 => {
-                    false
-                }
-                Pattern::DirectionLeft(size) if (*size as i32) < 1 => {
-                    false
-                }
-                Pattern::DirectionDown(size) if (*size as i32) < 1 => {
-                    false
-                }
-                Pattern::DiagonalUpperLeft(size) if (*size as i32) < 1 => {
-                    false
-                }
-                Pattern::DiagonalUpperRight(size) if (*size as i32) < 1 => {
-                    false
-                }
-                Pattern::DiagonalLowerLeft(size) if (*size as i32) < 1 => {
-                    false
-                }
-                Pattern::DiagonalLowerRight(size) if (*size as i32) < 1 => {
-                    false
-                }
-                Pattern::StraightStar(size) if (*size as i32) < 1 => {
-                    false
-                }
-                Pattern::DiagonalStar(size) if (*size as i32) < 1 => {
-                    false
-                }
-                _ => true
-            }
+                Pattern::Area(size) if size % 2 == 0 || (*size as i32) < 3 => false,
+                Pattern::DirectionUp(size) if (*size as i32) < 1 => false,
+                Pattern::DirectionRight(size) if (*size as i32) < 1 => false,
+                Pattern::DirectionLeft(size) if (*size as i32) < 1 => false,
+                Pattern::DirectionDown(size) if (*size as i32) < 1 => false,
+                Pattern::DiagonalUpperLeft(size) if (*size as i32) < 1 => false,
+                Pattern::DiagonalUpperRight(size) if (*size as i32) < 1 => false,
+                Pattern::DiagonalLowerLeft(size) if (*size as i32) < 1 => false,
+                Pattern::DiagonalLowerRight(size) if (*size as i32) < 1 => false,
+                Pattern::StraightStar(size) if (*size as i32) < 1 => false,
+                Pattern::DiagonalStar(size) if (*size as i32) < 1 => false,
+                _ => true,
+            };
         }
     }
 
@@ -149,20 +127,23 @@ pub mod resource_scanner {
         /// - `StraightStar(size)`: 12 * size
         /// - `DiagonalStar(size)`: 12 * size
         ///
-        pub fn scan(&mut self,
-                    world: &mut World,
-                    robot: &mut impl Runnable,
-                    pattern: Pattern,
-                    content: Content
+        pub fn scan(
+            &mut self,
+            world: &mut World,
+            robot: &mut impl Runnable,
+            pattern: Pattern,
+            content: Content,
         ) -> Result<Option<(MapCoordinate, usize)>, Box<dyn Error>> {
             // check if the given pattern size is valid
             if !pattern.check_size() {
                 return Err(Box::new(InvalidSizeError));
             }
             // get coordinates of tiles to scan
-            let sanitized_coordinates = ResourceScanner::get_sanitized_tiles(robot, world, &pattern);
+            let sanitized_coordinates =
+                ResourceScanner::get_sanitized_tiles(robot, world, &pattern);
 
-            let binding = sanitized_coordinates.iter()
+            let binding = sanitized_coordinates
+                .iter()
                 .map(|x| (*x).into())
                 .collect::<Vec<_>>();
 
@@ -181,13 +162,16 @@ pub mod resource_scanner {
                     // create a vector containing tile coordinates and corresponding content quantity
                     let mut tile_vec: Vec<(MapCoordinate, usize)> = Vec::new();
                     for (key, val) in hashmap.iter() {
-                        tile_vec.push((MapCoordinate::from(*key), val.as_ref().unwrap().content.get_value().0.unwrap()));
+                        tile_vec.push((
+                            MapCoordinate::from(*key),
+                            val.as_ref().unwrap().content.get_value().0.unwrap(),
+                        ));
                     }
                     // find the tile coordinate corresponding to the max value
                     let result = tile_vec.iter().max_by_key(|x| x.1).cloned().unwrap();
                     // return the result
                     Ok(Some(result))
-                },
+                }
                 Err(error) => {
                     return match error {
                         LibError::NotEnoughEnergy => Err(Box::new(ToolError::NotEnoughEnergy)),
@@ -195,9 +179,8 @@ pub mod resource_scanner {
                         other => Err(Box::new(ToolError::Other(format!("{:?}", other)))),
                     }
                 }
-            }
+            };
         }
-
 
         /// Computes and returns a vector of target coordinates based on the given pattern.
         ///
@@ -214,10 +197,10 @@ pub mod resource_scanner {
         ///
         /// # Examples
         ///
-        /// ```
-        /// use resource-scanner-tool::{Runnable, World, Pattern, map_coordinate, get_coordinates};
+        /// ```ignore
         ///
         /// // Create objects and define pattern
+        /// use resource_scanner_tool::tool::resource_scanner::*;
         /// let mut robot = create_robot();
         /// let world = create_world();
         /// let pattern = Pattern::Area(3);
@@ -226,10 +209,17 @@ pub mod resource_scanner {
         /// let coordinates = get_coordinates(&mut robot, &world, &pattern);
         /// println!("{:?}", coordinates);
         /// ```
-        fn get_target_coordinates(robot: &mut impl Runnable, world: &World, pattern: &Pattern) -> Option<Vec<MapCoordinate>> {
+        fn get_target_coordinates(
+            robot: &mut impl Runnable,
+            world: &World,
+            pattern: &Pattern,
+        ) -> Option<Vec<MapCoordinate>> {
             let mut out = Vec::new();
             let world_size = robot_map(world).unwrap().len();
-            let (x_robot, y_robot) = (robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
+            let (x_robot, y_robot) = (
+                robot.get_coordinate().get_row(),
+                robot.get_coordinate().get_col(),
+            );
 
             // according to the pattern, compute the corresponding tile coordinates
             match pattern {
@@ -243,7 +233,11 @@ pub mod resource_scanner {
                             let x_world = (x_robot as i32) + x - x_area_robot;
                             let y_world = (y_robot as i32) + y - y_area_robot;
                             // check if the coordinates are out of bound, if so omit them
-                            if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                            if !(x_world < 0
+                                || x_world > (world_size as i32) - 1
+                                || y_world < 0
+                                || y_world > (world_size as i32) - 1)
+                            {
                                 out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                             }
                         }
@@ -257,7 +251,11 @@ pub mod resource_scanner {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let x_world = (x_robot as i32) + x;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
@@ -270,7 +268,11 @@ pub mod resource_scanner {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let x_world = (x_robot as i32) + x;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
@@ -283,7 +285,11 @@ pub mod resource_scanner {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
@@ -296,7 +302,11 @@ pub mod resource_scanner {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
@@ -311,7 +321,11 @@ pub mod resource_scanner {
                         let x_world = (x_robot as i32) + x;
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
@@ -326,7 +340,11 @@ pub mod resource_scanner {
                         let x_world = (x_robot as i32) + x;
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
@@ -341,7 +359,11 @@ pub mod resource_scanner {
                         let x_world = (x_robot as i32) + x;
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
@@ -356,7 +378,11 @@ pub mod resource_scanner {
                         let x_world = (x_robot as i32) + x;
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
@@ -372,7 +398,11 @@ pub mod resource_scanner {
                             let x_world = (x_robot as i32) + x;
                             let y_world = (y_robot as i32) + y;
                             // check if the coordinates are out of bound, if so omit them
-                            if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                            if !(x_world < 0
+                                || x_world > (world_size as i32) - 1
+                                || y_world < 0
+                                || y_world > (world_size as i32) - 1)
+                            {
                                 out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                             }
                         }
@@ -388,7 +418,11 @@ pub mod resource_scanner {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let x_world = (x_robot as i32) + x;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
@@ -399,20 +433,19 @@ pub mod resource_scanner {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
-                        if !(x_world < 0 || x_world > (world_size as i32) - 1 || y_world < 0 || y_world > (world_size as i32) - 1) {
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
                             out.push(MapCoordinate::new(x_world as usize, y_world as usize));
                         }
                     }
                 }
             }
 
-            return if out.len() == 0 {
-                None
-            } else {
-                Some(out)
-            }
+            return if out.len() == 0 { None } else { Some(out) };
         }
-
 
         /// Returns a vector of sanitized coordinates to be scanned based on the provided pattern,
         /// excluding coordinates already known by the robot.
@@ -433,15 +466,21 @@ pub mod resource_scanner {
         ///
         /// # Examples
         ///
-        /// ```
-        /// use resource-scanner-tool::{Runnable, World, Pattern, map_coordinate, get_sanitized_tiles};
-        ///
+        /// ```ignore
+        /// use resource_scanner_tool::tool::*;
+        /// let mut robot = create_robot();
+        /// let world = create_world();
+        /// let pattern = Pattern::Area(3);
         ///
         /// // Get sanitized coordinates
         /// let sanitized_coordinates = get_sanitized_tiles(&mut robot, &world, &pattern);
         /// println!("{:?}", sanitized_coordinates);
         /// ```
-        fn get_sanitized_tiles(robot: &mut impl Runnable, world: &World, pattern: &Pattern) -> Vec<MapCoordinate> {
+        fn get_sanitized_tiles(
+            robot: &mut impl Runnable,
+            world: &World,
+            pattern: &Pattern,
+        ) -> Vec<MapCoordinate> {
             let target_vector = ResourceScanner::get_target_coordinates(robot, world, pattern);
 
             return match target_vector {
@@ -449,7 +488,9 @@ pub mod resource_scanner {
                     let mut tiles_to_remove = Vec::new();
                     for (index, coordinate) in v.iter().enumerate() {
                         let known_coordinates = robot_map(world).unwrap();
-                        if known_coordinates[coordinate.get_height()][coordinate.get_width()].is_none() {
+                        if known_coordinates[coordinate.get_height()][coordinate.get_width()]
+                            .is_none()
+                        {
                             tiles_to_remove.push(index);
                         }
                     }
@@ -458,13 +499,8 @@ pub mod resource_scanner {
                     }
                     v
                 }
-                None => Vec::new()
-            }
-
+                None => Vec::new(),
+            };
         }
     }
-}
-
-fn main() {
-
 }
