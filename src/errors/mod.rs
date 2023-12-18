@@ -12,18 +12,19 @@ pub mod tool_errors {
 
     impl Debug for ToolError {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{:?}", self)
+            //todo() Fix this stupid shit!
+            write!(f, "{}", self.to_string())
         }
     }
 
     impl Display for ToolError {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             return match self {
-                ToolError::EmptyCoordinates => Ok(()),
-                ToolError::NotEnoughEnergy => Ok(()),
+                ToolError::EmptyCoordinates => write!(f,"{}","Empty Coordinates".to_string()),
+                ToolError::NotEnoughEnergy => write!(f,"{}","Not Enough Energy".to_string()),
                 ToolError::Other(message) => write!(f, "{}", message),
-                ToolError::InvalidSizeError => Ok(()),
-                ToolError::NoMoreDiscovery => Ok(()),
+                ToolError::InvalidSizeError => write!(f,"Invalid Size"),
+                ToolError::NoMoreDiscovery => write!(f,"{}","No More Discovery".to_string()),
             };
         }
     }

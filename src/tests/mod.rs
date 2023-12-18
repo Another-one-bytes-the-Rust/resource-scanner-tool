@@ -79,41 +79,41 @@ mod tests {
         // Test Debug trait
         assert_eq!(
             format!("{:?}", ToolError::InvalidSizeError),
-            "InvalidSizeError"
+            "Invalid Size"
         );
         assert_eq!(
             format!("{:?}", ToolError::EmptyCoordinates),
-            "EmptyCoordinates"
+            "Empty Coordinates"
         );
         assert_eq!(
             format!("{:?}", ToolError::NotEnoughEnergy),
-            "NotEnoughEnergy"
+            "Not Enough Energy"
         );
         assert_eq!(
             format!("{:?}", ToolError::NoMoreDiscovery),
-            "NoMoreDiscovery"
+            "No More Discovery"
         );
         assert_eq!(
             format!("{:?}", ToolError::Other("Custom Error".to_string())),
-            "Other(\"Custom Error\")"
+            "Custom Error"
         );
 
         // Test Display trait
         assert_eq!(
             format!("{}", ToolError::InvalidSizeError),
-            "InvalidSizeError"
+            "Invalid Size"
         );
         assert_eq!(
             format!("{}", ToolError::EmptyCoordinates),
-            "EmptyCoordinates"
+            "Empty Coordinates"
         );
         assert_eq!(
             format!("{}", ToolError::NotEnoughEnergy),
-            "NotEnoughEnergy"
+            "Not Enough Energy"
         );
         assert_eq!(
             format!("{}", ToolError::NoMoreDiscovery),
-            "NoMoreDiscovery"
+            "No More Discovery"
         );
         assert_eq!(
             format!("{}", ToolError::Other("Custom Error".to_string())),
@@ -123,19 +123,19 @@ mod tests {
         // Test Error trait
         assert_eq!(
             ToolError::InvalidSizeError.to_string(),
-            "InvalidSizeError"
+            "Invalid Size"
         );
         assert_eq!(
             ToolError::EmptyCoordinates.to_string(),
-            "EmptyCoordinates"
+            "Empty Coordinates"
         );
         assert_eq!(
             ToolError::NotEnoughEnergy.to_string(),
-            "NotEnoughEnergy"
+            "Not Enough Energy"
         );
         assert_eq!(
             ToolError::NoMoreDiscovery.to_string(),
-            "NoMoreDiscovery"
+            "No More Discovery"
         );
         assert_eq!(
             ToolError::Other("Custom Error".to_string()).to_string(),
