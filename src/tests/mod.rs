@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod tests {
-    use std::error::Error;
     use crate::coordinates::map_coordinate::MapCoordinate;
     use crate::errors::tool_errors::ToolError;
 
@@ -75,6 +74,7 @@ mod tests {
 
     }
 
+    #[test]
     fn test_debug_display_and_error_traits() {
         // Test Debug trait
         assert_eq!(
