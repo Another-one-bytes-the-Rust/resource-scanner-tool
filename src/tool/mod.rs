@@ -103,9 +103,21 @@ pub mod resource_scanner {
 
     impl ResourceScanner {
         /// The scan function scans an area around the robot for the required content according to the pattern.
-        /// it returns an option containing tile coordinates and number of contents if some content is found.
-        /// if no content is found in the given area it returns None
-        /// if the robot didn't have enough energy an Error
+
+        /// # Arguments
+        ///
+        /// - `world`: A mutable reference to the world where the robot operates.
+        /// - `robot`: A mutable reference to the robot.
+        /// - `pattern`: The pattern defining the area to be scanned.
+        /// - `content`: The content to be searched for in the area.
+        ///
+        /// # Returns
+        ///
+        /// Returns a `Result` containing either:
+        /// - `Some((coordinates, count))`: If content is found, where `coordinates` is the location and `count` is the number of occurrences.
+        /// - `None`: If no content is found.
+        /// - `Err`: If the robot doesn't have enough energy to perform the scan.
+        ///
         ///
         /// # Energy Cost
         ///
