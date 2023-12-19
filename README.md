@@ -1,7 +1,7 @@
 
 # Resource Scanner Tool
 
-The Resource Scanner Tool is a Rust library that provides functionality to scan an area around a robot for a specified content and pattern. It is designed to work with the [`robotics_lib`](https://advancedprogramming.disi.unitn.it/crate?name=robotics_lib) library.
+The Resource Scanner Tool is a Rust library that provides functionality to scan an area around a robot for a specified content and pattern. It is designed to work with the [robotics_lib](https://advancedprogramming.disi.unitn.it/crate?name=robotics_lib) library.
 
 ## Features
 
