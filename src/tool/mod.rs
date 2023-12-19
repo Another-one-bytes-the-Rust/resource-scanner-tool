@@ -515,10 +515,10 @@ pub mod resource_scanner {
             return match target_vector {
                 Some(mut v) => {
                     let mut tiles_to_remove = Vec::new();
+                    let known_coordinates = robot_map(world).unwrap();
                     for (index, coordinate) in v.iter().enumerate() {
-                        let known_coordinates = robot_map(world).unwrap();
                         if known_coordinates[coordinate.get_height()][coordinate.get_width()]
-                            .is_none()
+                            .is_some()
                         {
                             tiles_to_remove.push(index);
                         }
