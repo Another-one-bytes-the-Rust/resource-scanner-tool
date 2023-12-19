@@ -426,7 +426,7 @@ pub mod resource_scanner {
 
                     // horizontal arms
                     let y_world = y_robot as i32;
-                    for x in -length..length {
+                    for x in -length..=length {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let x_world = (x_robot as i32) + x;
                         // check if the coordinates are out of bound, if so omit them
@@ -439,9 +439,23 @@ pub mod resource_scanner {
                         }
                     }
 
-                    // vertical arms
+                    // vertical upper arm
                     let x_world = x_robot as i32;
-                    for y in -length..length {
+                    for y in 1..=length {
+                        // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
+                        let y_world = (y_robot as i32) + y;
+                        // check if the coordinates are out of bound, if so omit them
+                        if !(x_world < 0
+                            || x_world > (world_size as i32) - 1
+                            || y_world < 0
+                            || y_world > (world_size as i32) - 1)
+                        {
+                            out.push(MapCoordinate::new(x_world as usize, y_world as usize));
+                        }
+                    }
+
+                    // vertical lower arm
+                    for y in -length..0 {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
