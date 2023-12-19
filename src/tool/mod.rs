@@ -520,7 +520,9 @@ pub mod resource_scanner {
                             tiles_to_remove.push(index);
                         }
                     }
-                    for index in tiles_to_remove.iter() {
+                    // sort and then iterate in inverse order
+                    tiles_to_remove.sort();
+                    for index in tiles_to_remove.iter().rev() {
                         v.remove(*index);
                     }
                     v
