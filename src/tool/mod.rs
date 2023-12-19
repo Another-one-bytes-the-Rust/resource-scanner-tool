@@ -239,8 +239,8 @@ pub mod resource_scanner {
                     let length = *size as i32;
                     let x_area_robot = length / 2;
                     let y_area_robot = length / 2;
-                    for x in 0..length {
-                        for y in 0..length {
+                    for x in 0..=length {
+                        for y in 0..=length {
                             // compute the tile coordinates in the world FoR (Frame of Reference) from the tile coordinates in the area FoR
                             let x_world = (x_robot as i32) + x - x_area_robot;
                             let y_world = (y_robot as i32) + y - y_area_robot;
@@ -259,7 +259,7 @@ pub mod resource_scanner {
                 Pattern::DirectionLeft(size) => {
                     let length = *size as i32;
                     let y_world = y_robot as i32;
-                    for x in 0..-length {
+                    for x in 0..=-length {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let x_world = (x_robot as i32) + x;
                         // check if the coordinates are out of bound, if so omit them
@@ -276,7 +276,7 @@ pub mod resource_scanner {
                 Pattern::DirectionRight(size) => {
                     let length = *size as i32;
                     let y_world = y_robot as i32;
-                    for x in 0..length {
+                    for x in 0..=length {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let x_world = (x_robot as i32) + x;
                         // check if the coordinates are out of bound, if so omit them
@@ -293,7 +293,7 @@ pub mod resource_scanner {
                 Pattern::DirectionUp(size) => {
                     let length = *size as i32;
                     let x_world = x_robot as i32;
-                    for y in 0..length {
+                    for y in 0..=length {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
@@ -310,7 +310,7 @@ pub mod resource_scanner {
                 Pattern::DirectionDown(size) => {
                     let length = *size as i32;
                     let x_world = x_robot as i32;
-                    for y in 0..-length {
+                    for y in 0..=-length {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them
@@ -326,7 +326,7 @@ pub mod resource_scanner {
 
                 Pattern::DiagonalUpperLeft(size) => {
                     let length = *size as i32;
-                    for i in 0..length {
+                    for i in 0..=length {
                         let x = -i;
                         let y = -i;
                         // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
@@ -345,7 +345,7 @@ pub mod resource_scanner {
 
                 Pattern::DiagonalUpperRight(size) => {
                     let length = *size as i32;
-                    for i in 0..length {
+                    for i in 0..=length {
                         let x = i;
                         let y = -i;
                         // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
@@ -364,7 +364,7 @@ pub mod resource_scanner {
 
                 Pattern::DiagonalLowerLeft(size) => {
                     let length = *size as i32;
-                    for i in 0..length {
+                    for i in 0..=length {
                         let x = -i;
                         let y = i;
                         // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
@@ -383,7 +383,7 @@ pub mod resource_scanner {
 
                 Pattern::DiagonalLowerRight(size) => {
                     let length = *size as i32;
-                    for i in 0..length {
+                    for i in 0..=length {
                         let x = i;
                         let y = i;
                         // compute the tile coordinates in the world FoR from the tile coordinates in the area FoR
@@ -402,7 +402,10 @@ pub mod resource_scanner {
 
                 Pattern::DiagonalStar(size) => {
                     let length = *size as i32;
-                    for i in 0..length {
+                    //push robot coordinates
+                    out.push(MapCoordinate::new(x_robot, y_robot));
+                    //push rest of coordinates
+                    for i in 1..=length {
                         for multiplier in [(1, 1), (1, -1), (-1, 1), (1, 1)] {
                             let x = multiplier.0 * i;
                             let y = multiplier.1 * i;
