@@ -12,7 +12,6 @@ pub mod tool_errors {
 
     impl Debug for ToolError {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-            //todo() Fix this stupid shit!
             write!(f, "{}", self.to_string())
         }
     }
