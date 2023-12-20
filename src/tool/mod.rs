@@ -1,11 +1,12 @@
 pub mod resource_scanner {
+    use std::collections::HashMap;
     use crate::coordinates::map_coordinate::MapCoordinate;
     use crate::errors::tool_errors::ToolError;
     use crate::errors::tool_errors::ToolError::*;
-    use robotics_lib::interface::{discover_tiles, robot_map, Tools};
+    use robotics_lib::interface::{discover_tiles, robot_map, robot_view, Tools};
     use robotics_lib::runner::Runnable;
     use robotics_lib::utils::LibError;
-    use robotics_lib::world::tile::Content;
+    use robotics_lib::world::tile::{Content, Tile};
     use robotics_lib::world::World;
     use std::error::Error;
 
@@ -150,6 +151,13 @@ pub mod resource_scanner {
             if !pattern.check_size() {
                 return Err(Box::new(InvalidSizeError));
             }
+            // check whether using robot_view is more convenient
+            let use_robot_view;
+            match pattern {
+                Pattern::Area(3) => use_robot_view = true,
+                _ => use_robot_view = false
+            }
+
             // get coordinates of tiles to scan
             let sanitized_coordinates =
                 ResourceScanner::get_sanitized_tiles(robot, world, &pattern);
@@ -160,8 +168,33 @@ pub mod resource_scanner {
                 .collect::<Vec<_>>();
 
             // discover the tiles
-            // todo() use robot_view if the the scan pattern is `Area(3)`
-            let tiles = discover_tiles(robot, world, &binding);
+            let tiles;
+
+            if use_robot_view {
+                // closure converting robot_view output to discover_tiles output
+                let to_hashmap = |tilemap: Vec<Vec<Option<Tile>>>| ->  Result<HashMap<(usize, usize), Option<Tile>>, LibError> {
+                    let mut hashmap = HashMap::new();
+                    let robot_x = robot.get_coordinate().get_col();
+                    let robot_y = robot.get_coordinate().get_row();
+                    for (row, tile_vec) in tilemap.iter().enumerate() {
+                        for (column, tile) in tile_vec.iter().enumerate() {
+                            match tile {
+                                Some(t) => {
+                                    let x = robot_x + row - 1;
+                                    let y = robot_y + column - 1;
+                                    hashmap.insert((x, y),Some(t.to_owned()))
+                                },
+                                None => None
+                            };
+                        }
+                    }
+                    return Ok(hashmap)
+                };
+                tiles = to_hashmap(robot_view(robot,world))
+            }
+            else {
+                tiles = discover_tiles(robot, world, &binding);
+            }
 
             return match tiles {
                 Ok(mut hashmap) => {
@@ -239,8 +272,8 @@ pub mod resource_scanner {
                     let length = *size as i32;
                     let x_area_robot = length / 2;
                     let y_area_robot = length / 2;
-                    for x in 0..=length {
-                        for y in 0..=length {
+                    for x in 0..length {
+                        for y in 0..length {
                             // compute the tile coordinates in the world FoR (Frame of Reference) from the tile coordinates in the area FoR
                             let x_world = (x_robot as i32) + x - x_area_robot;
                             let y_world = (y_robot as i32) + y - y_area_robot;
