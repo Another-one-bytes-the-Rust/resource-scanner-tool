@@ -175,14 +175,14 @@ pub mod resource_scanner {
                 // closure converting robot_view output to discover_tiles output
                 let to_hashmap = |tilemap: Vec<Vec<Option<Tile>>>| ->  Result<HashMap<(usize, usize), Option<Tile>>, LibError> {
                     let mut hashmap = HashMap::new();
-                    let robot_x = robot.get_coordinate().get_col();
-                    let robot_y = robot.get_coordinate().get_row();
-                    for (row, tile_vec) in tilemap.iter().enumerate() {
-                        for (column, tile) in tile_vec.iter().enumerate() {
+                    let x_robot = robot.get_coordinate().get_col();
+                    let y_robot = robot.get_coordinate().get_row();
+                    for (y_area, tile_vec) in tilemap.iter().enumerate() {
+                        for (x_area, tile) in tile_vec.iter().enumerate() {
                             match tile {
                                 Some(t) => {
-                                    let x = robot_x + row - 1;
-                                    let y = robot_y + column - 1;
+                                    let x = x_robot + x_area - 1;
+                                    let y = y_robot + y_area - 1;
                                     hashmap.insert((x, y),Some(t.to_owned()))
                                 },
                                 None => None
