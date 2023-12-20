@@ -262,7 +262,7 @@ pub mod resource_scanner {
         ) -> Option<Vec<MapCoordinate>> {
             let mut out = Vec::new();
             let world_size = robot_map(world).unwrap().len();
-            let (x_robot, y_robot) = (
+            let (y_robot, x_robot) = (
                 robot.get_coordinate().get_row(),
                 robot.get_coordinate().get_col(),
             );
@@ -551,7 +551,7 @@ pub mod resource_scanner {
                     let mut tiles_to_remove = Vec::new();
                     let known_coordinates = robot_map(world).unwrap();
                     for (index, coordinate) in v.iter().enumerate() {
-                        if known_coordinates[coordinate.get_height()][coordinate.get_width()]
+                        if known_coordinates[coordinate.get_width()][coordinate.get_height()]
                             .is_some()
                         {
                             tiles_to_remove.push(index);
