@@ -9,6 +9,7 @@ pub mod resource_scanner {
     use robotics_lib::world::tile::{Content, Tile};
     use robotics_lib::world::World;
     use std::error::Error;
+    use std::mem;
 
     /// Represents different scanning patterns used in the resource scanner tool.
     ///
@@ -199,7 +200,7 @@ pub mod resource_scanner {
             return match tiles {
                 Ok(mut hashmap) => {
                     // retain only the tiles containing the requested content
-                    hashmap.retain(|_key, val| val.as_ref().unwrap().content == content);
+                    hashmap.retain(|_key, val| mem::discriminant(&val.as_ref().unwrap().content) == mem::discriminant(&content));
                     // if the hashmap is empty, return None
                     if hashmap.is_empty() {
                         return Ok(None);
