@@ -4,15 +4,21 @@ pub(crate) mod test_helpers {
     use robotics_lib::world::tile::Tile;
     use crate::coordinates::map_coordinate::MapCoordinate;
 
-    pub fn print_grid(world_map: &Vec<Vec<Tile>>, known_tiles: &Option<Vec<Vec<Option<Tile>>>>) {
+    pub fn print_grid(world_map: &Vec<Vec<Tile>>, known_tiles: &Option<Vec<Vec<Option<Tile>>>>, robot_pos: (usize,usize)) {
+        let x = robot_pos.1;
+        let y = robot_pos.0;
         println!("printing world map");
-        for row in world_map.iter() {
-            for tile in row.iter() {
-                if tile.content == Coin(1) {
+        println!("robot_pos: ({},{})",x, y);
+        for (height,row) in world_map.iter().enumerate() {
+            for (width, tile) in row.iter().enumerate() {
+                if robot_pos == (height, width) {
+                    print!("R");
+                }
+                else if tile.content == Coin(1) {
                     print!("o");
                 }
                 else {
-                    print!(" ");
+                    print!("_");
                 }
             }
             println!("");
@@ -21,18 +27,22 @@ pub(crate) mod test_helpers {
         match known_tiles {
             Some(vector) => {
                 println!("printing known tiles:");
-                for row in vector.iter() {
-                    for tile in row.iter() {
+                println!("robot_pos: ({},{})",x, y);
+                for (height, row) in vector.iter().enumerate() {
+                    for (width, tile) in row.iter().enumerate() {
                         match tile {
                             Some(t) => {
-                                if t.content == Coin(1) {
+                                if robot_pos == (height, width) {
+                                    print!("R");
+                                }
+                                else if t.content == Coin(1) {
                                     print!("o");
                                 }
                                 else {
                                     print!("x");
                                 }
                             }
-                            None => print!(" "),
+                            None => print!("_"),
                         }
                     }
                     println!("");
