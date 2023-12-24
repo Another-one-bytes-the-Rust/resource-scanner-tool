@@ -3,13 +3,14 @@ pub mod resource_scanner {
     use crate::coordinates::map_coordinate::MapCoordinate;
     use crate::errors::tool_errors::ToolError;
     use crate::errors::tool_errors::ToolError::*;
-    use robotics_lib::interface::{discover_tiles, robot_map, robot_view, Tools};
+    use robotics_lib::interface::{debug, discover_tiles, robot_map, robot_view, Tools};
     use robotics_lib::runner::Runnable;
     use robotics_lib::utils::LibError;
     use robotics_lib::world::tile::{Content, Tile};
     use robotics_lib::world::World;
     use std::error::Error;
     use std::mem;
+    use std::ptr::hash;
 
     /// Represents different scanning patterns used in the resource scanner tool.
     ///
@@ -104,6 +105,7 @@ pub mod resource_scanner {
     impl Tools for ResourceScanner {}
 
     impl ResourceScanner {
+        // todo() specify behavior for content associated value
         /// The scan function scans an area around the robot for the required content according to the pattern.
 
         /// # Arguments
@@ -163,14 +165,8 @@ pub mod resource_scanner {
             let sanitized_coordinates =
                 ResourceScanner::get_sanitized_tiles(robot, world, &pattern);
 
-            let binding = sanitized_coordinates
-                .iter()
-                .map(|x| (*x).into())
-                .collect::<Vec<_>>();
-
             // discover the tiles
-            let tiles;
-
+            let mut tiles;
             if use_robot_view {
                 // closure converting robot_view output to discover_tiles output
                 let to_hashmap = |tilemap: Vec<Vec<Option<Tile>>>| ->  Result<HashMap<(usize, usize), Option<Tile>>, LibError> {
@@ -194,11 +190,42 @@ pub mod resource_scanner {
                 tiles = to_hashmap(robot_view(robot,world))
             }
             else {
+                let binding:Vec<(usize, usize)> = sanitized_coordinates.iter().map(|x|(x.get_height(),x.get_width())).collect();
+                // switch the input coordinates since the discover_tiles interface is takes (y,x) tuple
                 tiles = discover_tiles(robot, world, &binding);
+                // switch the output coordinates
+                match tiles {
+                    Ok(ref mut hashmap) => {
+                        let mut to_insert = Vec::new();
+                        // Collect items for insertion and removal
+                        for (key, value) in hashmap.iter_mut() {
+                            let new_key = (key.1, key.0);
+                            to_insert.push((new_key, value.clone()));
+                        }
+
+                        // Remove old keys
+                        for key in hashmap.keys().cloned().collect::<Vec<_>>() {
+                            hashmap.remove(&key);
+                        }
+
+                        // Insert new keys
+                        for item in to_insert.iter() {
+                            hashmap.insert(item.0, item.1.clone());
+                        }
+                    }
+                    Err(error) => {
+                        return match error {
+                            LibError::NotEnoughEnergy => Err(Box::new(ToolError::NotEnoughEnergy)),
+                            LibError::NoMoreDiscovery => Err(Box::new(ToolError::NoMoreDiscovery)),
+                            other => Err(Box::new(ToolError::Other(format!("{:?}", other)))),
+                        }
+                    }
+                }
+
             }
 
             return match tiles {
-                Ok(mut hashmap) => {
+                Ok(ref mut hashmap) => {
                     // retain only the tiles containing the requested content
                     hashmap.retain(|_key, val| mem::discriminant(&val.as_ref().unwrap().content) == mem::discriminant(&content));
                     // if the hashmap is empty, return None
