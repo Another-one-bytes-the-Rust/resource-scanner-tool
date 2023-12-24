@@ -1,27 +1,12 @@
-use crate::coordinates::map_coordinate::MapCoordinate;
-use crate::tool::resource_scanner::{Pattern, ResourceScanner};
-use crate::utils::test_helpers::print_grid;
-use robotics_lib::energy::Energy;
-use robotics_lib::event::events::Event;
-use robotics_lib::interface::{debug, discover_tiles, robot_map};
-use robotics_lib::runner::backpack::BackPack;
-use robotics_lib::runner::{Robot, Runnable};
-use robotics_lib::world::coordinates::Coordinate;
-use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
-use robotics_lib::world::environmental_conditions::WeatherType::Sunny;
-use robotics_lib::world::tile::{Content, Tile, TileType};
-use robotics_lib::world::world_generator::Generator;
-use robotics_lib::world::World;
-
 #[cfg(test)]
 mod tests {
     use crate::coordinates::map_coordinate::MapCoordinate;
     use crate::errors::tool_errors::ToolError;
     use crate::tool::resource_scanner::{Pattern, ResourceScanner};
-    use crate::utils::test_helpers::print_grid;
+    
     use robotics_lib::energy::Energy;
     use robotics_lib::event::events::Event;
-    use robotics_lib::interface::{debug, discover_tiles, go, robot_map, Direction};
+    
     use robotics_lib::runner::backpack::BackPack;
     use robotics_lib::runner::{Robot, Runnable, Runner};
     use robotics_lib::world::coordinates::Coordinate;
@@ -31,7 +16,7 @@ mod tests {
     use robotics_lib::world::world_generator::Generator;
     use robotics_lib::world::world_generator::World as WorldType;
     use robotics_lib::world::World;
-    use std::mem;
+    
 
     #[test]
     fn test_new_map_coordinate() {
@@ -172,7 +157,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -277,7 +262,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -382,7 +367,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -487,7 +472,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -592,7 +577,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -697,7 +682,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -802,7 +787,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -907,7 +892,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1012,7 +997,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1117,7 +1102,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1222,7 +1207,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1327,7 +1312,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1433,7 +1418,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1539,7 +1524,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1649,7 +1634,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1759,7 +1744,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1865,7 +1850,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -1971,7 +1956,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -2081,7 +2066,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -2191,7 +2176,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -2296,7 +2281,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -2401,7 +2386,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -2506,7 +2491,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -2611,7 +2596,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -2717,7 +2702,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -2821,7 +2806,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();
@@ -2926,7 +2911,7 @@ mod tests {
                     Err(_) => panic!(),
                 }
             }
-            fn handle_event(&mut self, event: Event) {
+            fn handle_event(&mut self, _event: Event) {
                 // println!();
                 // println!("{:?}", event);
                 // println!();

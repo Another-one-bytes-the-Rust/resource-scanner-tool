@@ -2,7 +2,7 @@ pub mod resource_scanner {
     use crate::coordinates::map_coordinate::MapCoordinate;
     use crate::errors::tool_errors::ToolError;
     use crate::errors::tool_errors::ToolError::*;
-    use robotics_lib::interface::{debug, discover_tiles, robot_map, robot_view, Tools};
+    use robotics_lib::interface::{discover_tiles, robot_map, robot_view, Tools};
     use robotics_lib::runner::Runnable;
     use robotics_lib::utils::LibError;
     use robotics_lib::world::tile::{Content, Tile};
@@ -10,7 +10,7 @@ pub mod resource_scanner {
     use std::collections::HashMap;
     use std::error::Error;
     use std::mem;
-    use std::ptr::hash;
+    
 
     /// Represents different scanning patterns used in the resource scanner tool.
     ///

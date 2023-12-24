@@ -1,8 +1,8 @@
 pub(crate) mod test_helpers {
-    use std::error::Error;
+    
     use robotics_lib::world::tile::Content::Coin;
     use robotics_lib::world::tile::Tile;
-    use crate::coordinates::map_coordinate::MapCoordinate;
+    
 
     pub fn print_grid(world_map: &Vec<Vec<Tile>>, known_tiles: &Option<Vec<Vec<Option<Tile>>>>, robot_pos: (usize,usize)) {
         let x = robot_pos.1;
