@@ -1,5 +1,4 @@
 pub mod resource_scanner {
-    use std::collections::HashMap;
     use crate::coordinates::map_coordinate::MapCoordinate;
     use crate::errors::tool_errors::ToolError;
     use crate::errors::tool_errors::ToolError::*;
@@ -8,6 +7,7 @@ pub mod resource_scanner {
     use robotics_lib::utils::LibError;
     use robotics_lib::world::tile::{Content, Tile};
     use robotics_lib::world::World;
+    use std::collections::HashMap;
     use std::error::Error;
     use std::mem;
     use std::ptr::hash;
@@ -105,7 +105,6 @@ pub mod resource_scanner {
     impl Tools for ResourceScanner {}
 
     impl ResourceScanner {
-        // todo() specify behavior for content associated value
         /// The scan function scans an area around the robot for the required content according to the pattern.
 
         /// # Arguments
@@ -114,6 +113,11 @@ pub mod resource_scanner {
         /// - `robot`: A mutable reference to the robot.
         /// - `pattern`: The pattern defining the area to be scanned.
         /// - `content`: The content to be searched for in the area.
+        ///
+        /// ## Notes on Content Behavior
+        ///
+        /// The `Content` enum can have different associated types, the scan tool is designed to operate seamlessly for `usize` and `()`.
+        /// The contents `Content::Bin(Range<usize>)`, `Content::Crate(Range<usize>)` and `Content::Bank(Range<usize>)` are currently not supported.
         ///
         /// # Returns
         ///
@@ -150,6 +154,11 @@ pub mod resource_scanner {
             pattern: Pattern,
             content: Content,
         ) -> Result<Option<(MapCoordinate, usize)>, Box<dyn Error>> {
+            // check if the given content is supported
+            match content {
+                Content::Bin(_)|Content::Bank(_)|Content::Crate(_) => return Err(Box::new(ContentNotSupported)),
+                _ => ()
+            }
             // check if the given pattern size is valid
             if !pattern.check_size() {
                 return Err(Box::new(InvalidSizeError));
@@ -158,7 +167,7 @@ pub mod resource_scanner {
             let use_robot_view;
             match pattern {
                 Pattern::Area(3) => use_robot_view = true,
-                _ => use_robot_view = false
+                _ => use_robot_view = false,
             }
 
             // get coordinates of tiles to scan
@@ -187,10 +196,12 @@ pub mod resource_scanner {
                     }
                     return Ok(hashmap)
                 };
-                tiles = to_hashmap(robot_view(robot,world))
-            }
-            else {
-                let binding:Vec<(usize, usize)> = sanitized_coordinates.iter().map(|x|(x.get_height(),x.get_width())).collect();
+                tiles = to_hashmap(robot_view(robot, world))
+            } else {
+                let binding: Vec<(usize, usize)> = sanitized_coordinates
+                    .iter()
+                    .map(|x| (x.get_height(), x.get_width()))
+                    .collect();
                 // switch the input coordinates since the discover_tiles interface is takes (y,x) tuple
                 tiles = discover_tiles(robot, world, &binding);
                 // switch the output coordinates
@@ -221,13 +232,15 @@ pub mod resource_scanner {
                         }
                     }
                 }
-
             }
 
             return match tiles {
                 Ok(ref mut hashmap) => {
                     // retain only the tiles containing the requested content
-                    hashmap.retain(|_key, val| mem::discriminant(&val.as_ref().unwrap().content) == mem::discriminant(&content));
+                    hashmap.retain(|_key, val| {
+                        mem::discriminant(&val.as_ref().unwrap().content)
+                            == mem::discriminant(&content)
+                    });
                     // if the hashmap is empty, return None
                     if hashmap.is_empty() {
                         return Ok(None);
@@ -320,7 +333,8 @@ pub mod resource_scanner {
                 Pattern::DirectionLeft(size) => {
                     let length = *size as i32;
                     let y_world = y_robot as i32;
-                    for x in 0..=-length {
+                    for index in 0..=length {
+                        let x = -index;
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let x_world = (x_robot as i32) + x;
                         // check if the coordinates are out of bound, if so omit them
@@ -356,7 +370,7 @@ pub mod resource_scanner {
                     let x_world = x_robot as i32;
                     for y in 0..=length {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
-                        let y_world = (y_robot as i32) + y;
+                        let y_world = (y_robot as i32) - y;
                         // check if the coordinates are out of bound, if so omit them
                         if !(x_world < 0
                             || x_world > (world_size as i32) - 1
@@ -371,7 +385,7 @@ pub mod resource_scanner {
                 Pattern::DirectionDown(size) => {
                     let length = *size as i32;
                     let x_world = x_robot as i32;
-                    for y in 0..=-length {
+                    for y in 0..=length {
                         // compute the tile coordinates in the world FoR from the tile coordinates in the robot FoR
                         let y_world = (y_robot as i32) + y;
                         // check if the coordinates are out of bound, if so omit them

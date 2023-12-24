@@ -7,6 +7,7 @@ pub mod tool_errors {
         EmptyCoordinates,
         NotEnoughEnergy,
         NoMoreDiscovery,
+        ContentNotSupported,
         Other(String),
     }
 
@@ -24,6 +25,7 @@ pub mod tool_errors {
                 ToolError::Other(message) => write!(f, "{}", message),
                 ToolError::InvalidSizeError => write!(f,"Invalid Size"),
                 ToolError::NoMoreDiscovery => write!(f,"{}","No More Discovery".to_string()),
+                ToolError::ContentNotSupported => write!(f,"{}","The used content is not supported".to_string())
             };
         }
     }
