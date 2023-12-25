@@ -3,6 +3,11 @@ authors = ["Another one bytes the Rust"]
 name = "resource-scanner-tool"
 version = "1.0.0"
 edition = "2021"
+description = "The Resource Scanner Tool provides functionality to scan an area around a robot for a specified content and pattern."
+documentation = ""
+readme = "README.md"
+repository = "https://github.com/Another-one-bytes-the-Rust/resource-scanner-tool"
+exclude = ["/.idea"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
