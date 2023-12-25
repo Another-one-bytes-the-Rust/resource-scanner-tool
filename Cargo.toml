@@ -6,7 +6,7 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "resource_scanner_tool"
+name = "another_one_bytes_the_dust_resource_scanner_tool"
 path = "src/lib.rs"
 
 [dependencies]
